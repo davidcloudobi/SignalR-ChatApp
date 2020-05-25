@@ -1,0 +1,50 @@
+﻿//using System;
+//using System.Collections.Generic;
+//using System.Text;
+
+//namespace SignalR.JWT
+//{
+//    class WebSocketsMiddleware
+//    {
+//    }
+//}
+
+
+
+
+
+using System;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
+
+namespace AdminService.Middleware
+{
+    public class WebSocketsMiddleware
+    {
+        private readonly RequestDelegate _next;
+
+        public WebSocketsMiddleware(RequestDelegate next)
+        {
+            _next = next;
+        }
+
+        public async Task Invoke(HttpContext httpContext)
+        {
+            var request =  httpContext.Request;
+            //var accessTok = await httpContext.GetTokenAsync("access_token");
+            //var accessTokens = httpContext.Request.Query["access_token"];
+
+            // web sockets cannot pass headers so we must take the access token from query param and
+            // add it to the header before authentication middleware runs
+            if (request.Path.StartsWithSegments("/chathub", StringComparison.OrdinalIgnoreCase) &&
+                request.Query.TryGetValue("access_token", out var accessToken))
+            {
+                request.Headers.Add("Authorization", $"Bearer {accessToken}");
+               
+            }
+
+            await _next(httpContext);
+        }
+    }
+}
